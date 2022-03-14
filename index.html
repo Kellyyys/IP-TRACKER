@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="index.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- displays site properly based on user's device -->
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./images/favicon-32x32.png">
+  
+  <title>IP Address Tracker</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+  <!-- Feel free to remove these styles or customise in your own stylesheet 👍 -->
+</head>
+<body>
+  <div class="backg">
+    <h1>IP Address Tracker</h1>
+    <div class="topnav">
+      <input class="search-bar" type="text" id="special" placeholder="Search..">
+      <div class="search-arrow" onclick="search()">
+      <img src="images/icon-arrow.svg">
+      </div>
+    </div>
+    <div class="options">
+      <div class = "inline">
+        <h3>IP ADDRESS</h3>
+        <div class="ip" id="ip-address"></div>
+      </div>
+      <div class = "inline">
+        <h3>LOCATION</h3>
+        <div class="location" id="location"></div>
+      </div>
+      <div class = "inline">
+        <h3>TIME ZONE</h3>
+        <div class="time-zone" id="time-zone"></div>
+      </div>
+      <div class = "inline">
+        <h3>ISP</h3>
+        <div id="isp"></div>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+  <div class="map">
+    <img class='position-icon' src="images/icon-location.svg"></img>
+    <div id="mapid"></div>
+  </div>
+  <script>
+    var map = L.map('map').setView([51.505, -0.09], 13);
+
+    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href=" ">OpenStreetMap</a > contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a >',
+        maxZoom: 18,
+        id: 'mapbox/streets-v11',
+        tileSize: 512,
+        zoomOffset: -1,
+        accessToken: 'pk.eyJ1Ijoia2VsbHlzaGVuIiwiYSI6ImNsMG80cjduMjBnNWYzYm83YmlsN2F2ZWIifQ.vPiSaMjHZMAAsge1pfIHug'
+    }).addTo(map);
+
+    document.getElementById("special").value = "8.8.8.8";
+    search();
+
+    var ipadd = document.getElementById("ip-address");
+    var loca = document.getElementById("location");
+    var time = document.getElementById("time-zone");
+    var isp = document.getElementById("isp");
+
+    function replace(data) {
+      ipadd.replaceChild(document.createTextNode(data[0]), ipadd.childNodes[0]);
+      loca.replaceChild(document.createTextNode(data[1]), loca.childNodes[0]);
+      time.replaceChild(document.createTextNode(data[2]), time.childNodes[0]);
+      isp.replaceChild(document.createTextNode(data[3]), isp.childNodes[0]);
+    }
+
+    function app(data) {
+      ipadd.appendChild(document.createTextNode(data[0]));
+      loca.appendChild(document.createTextNode(data[1]));
+      time.appendChild(document.createTextNode(data[2]));
+      isp.appendChild(document.createTextNode(data[3]));
+    }
+
+    var loc;
+    var tim;
+    var provider;
+    var ip;
+    
+ async function search() {
+      let Data = await fetcher(document.getElementById("special").value);
+      if (err == true) {
+        if (ipadd.childNodes.length > 0) {
+          replace(["Unknown", "Unknown", "Unknown", "Unknown"]); 
+        } else {
+          app(["Unknown", "Unknown", "Unknown", "Unknown"]);
+        }
+      } else {
+        loc = Data.location.city + ", " + Data.location.region + ", " + Data.location.postalCode;
+        tim = "UTC" + Data.location.timezone;
+        provider = Data.as.name;
+        ip = Data.ip
+        let arr = [ip, loc, tim, provider]
+        if (ipadd.childNodes.length > 0) {
+          replace(arr);
+        } else {
+          app(arr);
+        }
+      }
+      lat = Data.location.lat;
+      lng = Data.location.lng;
+      map.setView(new L.LatLng(lat, lng), 13);
+    }
+
+    var err = false;
+
+    async function fetcher(ip){
+      let Data;
+      await $.get("https://geo.ipify.org/api/v1?apiKey=at_GMPh0oTOPUPp4BCx0MlRIFo2mQLXM&ipAddress="+ip,(data,status)=>{
+                    Data = data;
+                }).fail(function(jqXHR,textStatus,error){
+                   err = true; 
+                });
+                return Data;
+            }
+  </script>
+</body>
+</html>
